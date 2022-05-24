@@ -5,9 +5,7 @@
   "main": "index.js",
   "scripts": {
     "g:vuecsv" : "node generator/vueCsvGenerator.js",
-    "g:vbcsv" : "node generator/vbCsvGenerator.js",
-    "generate": "node --trace-warnings generator/main.js",
-    "start": "nodemon --exec generator/main.js --trace-warnings"
+    "g:vbcsv" : "node generator/vbCsvGenerator.js"
   },
   "repository": {
     "type": "git",
