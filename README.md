@@ -1,25 +1,13 @@
-https://www.hygen.io/docs/quick-start
+## Generate Vue Files based off of CSV
 
-
-
-# New generator without promps
-
-**mygen** argument is the name of the new generator
+### Vue
 
 ```
-hygen mygen new
+npm run g:vuecsv
 ```
 
-## use our new generator without prompts
+### VB Pages
 
 ```
-hygen mygen new
+npm run g:vbcsv
 ```
-
-# New generator with prompts 
-
-```
-hygen generator with-prompt mygen
-```
-
-## Use our new gen with prompts
