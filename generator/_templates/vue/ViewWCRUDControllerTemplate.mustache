@@ -1,0 +1,37 @@
+<template>
+    <ThePageContainer :pageHeading="dto.screenTitle">
+        <!-- @@TODO : Enter your code here -->
+
+        <!-- @@TODO : Configure Controller -->
+        <WCrudController
+            :dtoOnLoad="dto"
+            ref="crudController<% screen %>"
+            controllerName="<% screen %>"
+            readOnLoad="GetPageLoadInfo"
+            :dto="dto"
+            @after_readOnLoad="readOnLoad($event)"
+            >
+
+
+            </WCrudController>
+    </ThePageContainer>
+</template>
+
+<script lang="ts">
+import { Vue } from "vue-property-decorator";
+import { Component } from "vue-class-component";
+import { <% screen %>DTO } from "@/dto/<% screen %>/<% screen %>DTO";
+import { <% screen %>Data } from "@/data/<% screen %>/<% screen %>Data";
+
+@Component({
+})
+export default class <% screen %> extends Vue {
+    public dto = new <% screen %>DTO();
+    public data = new <% screen %>Data();
+
+    //@@TODO - Configure as needed
+    readOnLoad($event){
+        this.dto = Object.assign({}, this.dto, $event)
+    }
+}  
+</script>

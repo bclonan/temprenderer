@@ -1,0 +1,33 @@
+{
+  "name": "temprenderer",
+  "version": "1.0.0",
+  "description": "https://www.hygen.io/docs/quick-start",
+  "main": "index.js",
+  "scripts": {
+    "g:vuecsv" : "node generator/vueCsvGenerator.js",
+    "generate": "node --trace-warnings generator/main.js",
+    "start": "nodemon --exec generator/main.js --trace-warnings"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bclonan/temprenderer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bclonan/temprenderer/issues"
+  },
+  "homepage": "https://github.com/bclonan/temprenderer#readme",
+  "dependencies": {
+    "chalk": "^5.0.1",
+    "csv-parser": "^3.0.0",
+    "dotenv": "^16.0.1",
+    "fs-extra": "^10.1.0",
+    "jsonfile": "^6.1.0",
+    "mustache": "^4.2.0",
+    "winston": "^3.7.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.16"
+  }
+}
