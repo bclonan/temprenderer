@@ -1,3 +1,4 @@
+'use strict';
 //Env Configuration
 require('dotenv').config()
 //Native Libraries
@@ -7,10 +8,26 @@ const path = require('path');
 const Mustache = require('mustache');
 const customTemplateTags = ['<%', '%>'];
 const csv = require('csv-parser')
-const jsonfile = require('jsonfile')
+const jsonfile = require('jsonfile');
 
-//Holds csv file list to create
-let rawFileList = [];
+/**
+ * @name checkIfFileExists
+ * @description Checks if a file/path exists
+ * @param {string} filePath 
+ * @returns 
+ * true if file exists
+ * false if file does not exist
+ */
+const checkIfFileExists = (filePath = null) => {
+    return new Promise((resolve, reject) => {
+    if (filePath == null) return reject("no path provided");
+    let directory = path.join(__dirname, filePath);
+    if (fs.existsSync(directory)) {
+        resolve(true);
+    }
+    resolve(false);
+    });
+};
 
 /**
  * @name checkEmptyUtility
@@ -57,12 +74,14 @@ const readCSV = (csvFileName = null) => {
  * @param {string} newContents 
  * @returns 
  */
+
 const createNewFile = (fileName = null, newContents = null) => {
     return new Promise((resolve, reject) => {
         if (fileName == null) return reject("no file name provided");
         if (newContents == null) return reject("no new contents provided");
         let file = path.join(__dirname, fileName);
-        fs.writeFile(file, newContents, (err) => {
+        console.log("Creating", file)
+        fs.appendFile(file, newContents, (err) => {
             if (err) return reject(err);
         });
         resolve(true);
@@ -79,7 +98,6 @@ const checkIfDirectoryExists = (directoryName = null) => {
     if (directoryName == null) return console.log("no directory name provided");
     let directory = path.join(__dirname, directoryName);
     if (fs.existsSync(directory)) {
-        console.log("dir exists")
         return true;
     }
     return false;
@@ -135,18 +153,69 @@ const generateTemplates = (templateFile = null, screen = null) => {
  * @param {object} newRouteList - list of routes to create
  * @returns 
  */
-const updateVueRouterConfig = (newRouteList = {}) => {
+const updateVueRouterConfig = async (newRouteList = {}) => {
+    let routerConfig = {};
+    const routerFile = path.join(__dirname, `${process.env.VUE_ROUTER_CONFIG_FILE_LOCATION}/${process.env.VUE_ROUTER_CONFIG_FILE_NAME}.json`);
     if (newRouteList == null || checkEmptyUtility(newRouteList)) return console.log("No new routes to add.");
-    const routerFile = path.join(__dirname, `${process.env.VUE_ROUTER_CONFIG_FILE_LOCATION}`);
     // Read the file to construct new json object
-    let routerConfig = jsonfile.readFileSync(routerFile);
+    routerConfig = await jsonfile.readFile(routerFile);
     routerConfig = Object.assign({}, routerConfig, newRouteList);
-    //Write the new router config to file
-    jsonfile.writeFileSync(routerFile, routerConfig, {
-        spaces: 2
-    });
+    jsonfile.writeFile(routerFile, routerConfig, { spaces: 2, finalEOL: false }, function (err) {
+        if (err) console.log(err)
+    })
 };
 
+async function handleScreenCreation(screenData = {}) {
+    let newViewCode, newDtoCode, newDataCode, newDtoFile, newDataFile, newViewFile = null;
+    if (screenData == null || checkEmptyUtility(screenData)) return console.log("No screen data provided.");
+    let {
+        screen,
+        controller = 'none',
+        route = "",
+        directory,
+        chunk,
+        created = 'n'
+    } = screenData;
+    return new Promise((resolve, reject) => {
+
+        // console.log(`${screen} - ${controller} - ${route} - ${directory} - ${chunk} - ${created}`);
+        //If screen was already created - skip or we can use the update to overwrite/append? 
+        if (created === 'y') {
+            console.log("screen already created");
+            return;
+        }
+
+        //Create the 'view' file first Make extendable for future controllers/template options
+        if (controller === 'none') {
+            newViewCode = generateTemplates(`vue/${process.env.VueViewFileTemplate}.mustache`, screen);
+        } else {
+            newViewCode = generateTemplates(`vue/View${controller}Template.mustache`, screen);
+        }
+
+        // Create DTO, Data files, and View File name
+        newDtoCode = generateTemplates(`vue/${process.env.VueDtoFileTemplate}.mustache`, screen);
+        newDataCode = generateTemplates(`vue/${process.env.VueDataFileTemplate}.mustache`, screen);
+        newDtoFile = `${process.env.VUE_BASE_PROJECT_DIRECTORY}/dto/${directory}/${screen}DTO.ts`;
+        newDataFile = `${process.env.VUE_BASE_PROJECT_DIRECTORY}/data/${directory}/${screen}Data.ts`;
+        newViewFile = `${process.env.VUE_BASE_PROJECT_DIRECTORY}/views/${directory}/${screen}.ts`;
+        //Create directories if they do not exist - recursively (likely not necessary);
+        createRecursiveDirectory(`${process.env.VUE_BASE_PROJECT_DIRECTORY}/dto/${directory}`)
+            .then(() => {
+                createRecursiveDirectory(`${process.env.VUE_BASE_PROJECT_DIRECTORY}/data/${directory}`)
+            })
+            .then(() => {
+                
+                 createNewFile(newDtoFile, newDtoCode);
+                 createNewFile(newDataFile, newDataCode);
+                 createNewFile(newViewFile, newViewCode);
+            })
+        .catch((err) => {
+            reject(err)
+        });
+        
+        resolve(true)
+    });
+}
 
 /**
  * @name runCSVVueGenerator
@@ -156,67 +225,38 @@ const updateVueRouterConfig = (newRouteList = {}) => {
  *  
  */
 const runCSVVueGenerator = async () => {
-    let newViewCode, newDtoCode, newDataCode, newDtoFile, newDataFile, newViewFile = null,
-        csvFileList = [],
-        newRouteListToAdd = {};
+    let csvFileList = [],
+        newRouteListToAdd = {}, routerFileExists = false, ROUTER_JSON_FILE = null, EmptyJsonTemplate = '{}', ROUTER_JSON_FILE_DIR = null;
     try {
         //Read the csv
         csvFileList = await readCSV(`/${process.env.VUE_CSV_FILE_NAME}.csv`);
-
-
-        await Promise.all(csvFileList.map(async (s) => {
-            let {
-                screen,
-                controller = 'none',
-                route = "",
-                directory,
-                chunk,
-                created = 'n'
-            } = s;
-
-            //If screen was already created - skip or we can use the update to overwrite/append? 
-            if (created === 'y') {
-                console.log("screen already created");
-                return;
-            }
-
-            //Create the 'view' file first Make extendable for future controllers/template options
-            if (controller === 'none') {
-                // option 1 Create the templates Optional for more set and forget
-                // let templateOptions = process.env.VUE_TEMPLATE_LIST.split(",");
-                // await templateOptions.forEach(async (template) => {
-                //     let templateFile = `vue/${template}.mustache`;
-                //     let templateData = generateTemplates(templateFile, screen);
-                //     let fileName = `${process.env.VUE_BASE_PROJECT_DIRECTORY}/${directory}/${screen}.ts`;
-                //     createFile(fileName, templateData);
-                // });
-                // Option 2 define list
-                newViewCode = generateTemplates(`vue/${process.env.VueViewFileTemplate}.mustache`, screen);
-            } else {
-                newViewCode = generateTemplates(`vue/View${controller}Template.mustache`, screen);
-            }
-
-            // Create DTO, Data files, and View File name
-            newDtoCode = generateTemplates(`vue/${process.env.VueDtoFileTemplate}.mustache`, screen);
-            newDataCode = generateTemplates(`vue/${process.env.VueDataFileTemplate}.mustache`, screen);
-            newDtoFile = `${process.env.VUE_BASE_PROJECT_DIRECTORY}/dto/${directory}/${screen}DTO.ts`;
-            newDataFile = `${process.env.VUE_BASE_PROJECT_DIRECTORY}/data/${directory}/${screen}Data.ts`;
-            newViewFile = `${process.env.VUE_BASE_PROJECT_DIRECTORY}/views/${directory}/${screen}.ts`;
-            //Create directories if they do not exist - recursively (likely not necessary);
-            await createRecursiveDirectory(`${process.env.VUE_BASE_PROJECT_DIRECTORY}/dto/${directory}`);
-            await createRecursiveDirectory(`${process.env.VUE_BASE_PROJECT_DIRECTORY}/data/${directory}`);
-            //Create files
-            await createNewFile(newDtoFile, newDtoCode);
-            await createNewFile(newDataFile, newDataCode);
-            await createNewFile(newViewFile, newViewCode);
+        await Promise.all(csvFileList.map((screenData) => {
+            handleScreenCreation(screenData);
             Object.assign(newRouteListToAdd, {
-                [screen]: route
+                [screenData.screen]: screenData.route
             });
-
+            return newRouteListToAdd
         }));
 
-        //Update the router config json file
+        //Update the vue router config file
+        ROUTER_JSON_FILE_DIR = `${process.env.VUE_ROUTER_CONFIG_FILE_LOCATION}`;
+        ROUTER_JSON_FILE = `${process.env.VUE_ROUTER_CONFIG_FILE_LOCATION}/${process.env.VUE_ROUTER_CONFIG_FILE_NAME}.json`;
+        routerFileExists = await checkIfFileExists(ROUTER_JSON_FILE);
+        if (!routerFileExists) {
+            await createRecursiveDirectory(ROUTER_JSON_FILE_DIR);
+            await createNewFile(ROUTER_JSON_FILE, EmptyJsonTemplate);
+        }
         await updateVueRouterConfig(newRouteListToAdd);
+        console.log("fileexists", routerFileExists)
+        // routerFileExists = await checkIfFileExists(ROUTER_JSON_FILE).then(result => {
+        //     console.log("file exists")
+        //     if(!result) {
+        //         createRecursiveDirectory(ROUTER_JSON_FILE_DIR);
+        //         createNewFile(ROUTER_JSON_FILE, EmptyJsonTemplate)
+        //     }
+        // }).then(() => {
+        //     return updateVueRouterConfig(newRouteListToAdd);
+        // });
 
         //@@TODO : write a function to update csv;
     } catch (error) {
