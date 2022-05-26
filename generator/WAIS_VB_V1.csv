@@ -1,4 +1,4 @@
 screen,directory,created
-SSR11234,health_care/med,TRUE
-SSR11233,bwc/test,FALSE
-SSR22222,health_care/med,FALSE
+SSR11234,health_care/med,f
+SSR11233,bwc/test,f
+SSR22222,health_care/med,f
