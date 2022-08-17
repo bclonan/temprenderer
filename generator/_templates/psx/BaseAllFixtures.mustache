@@ -1,0 +1,22 @@
+/*
+ * Mirage JS guide on Fixtures: https://miragejs.com/docs/data-layer/fixtures
+ */
+
+{{ #bulk_arr }}
+   /**
+    * @summary {{description}}
+    * @type {fixture}
+    * @name - {{name}}Fixture
+    * @memberof {{parent}}
+    * @module mirage/fixtures/{{ name }}Fixture
+    */
+   import {{ name }}Fixture from '@mirage/fixtures/{{ name }}Fixture.json';
+{{ /bulk_arr }}
+
+
+
+export default { 
+  {{ #bulk_arr }}
+    {{ name }}Fixture,
+  {{ /bulk_arr }} 
+};

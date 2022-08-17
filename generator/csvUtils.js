@@ -84,9 +84,23 @@ const cliLogger = winston.createLogger(logConfiguration);
  * false if object is not empty
  */
  const checkEmptyUtility = (obj = {}) => {
+    console.log("checkEmptyUtility", obj);
     return Object.keys(obj).length === 0 && obj.constructor === Object;
 }
 
+/**
+ * @name checkEmptyUtilityArr
+ * @description Checks if an an array is empty
+ * @param {Array} - bulk_arr - array of screen objects
+ * @returns
+ * true if is an array and has items
+ * false if is an array and has no items
+ */
+ const checkEmptyUtilityArr = (arr = []) => {
+    if(!Array.isArray(arr)) throw 'ERROR : checkEmptyUtilityArr - Invalid argument typeof Array required.';
+    if (!arr.length) throw "ERROR : checkEmptyUtilityArr - Empty Array skipping updating.";
+    return true;
+}
 
 /** 
  * @name readCSV
@@ -218,6 +232,25 @@ const cliLogger = winston.createLogger(logConfiguration);
 };
 
 /**
+ * @name generateBulkTemplate
+ * @description Creates the code necessary using generateTemplates mustache template
+ * @param {string} templateFile - name of template file to use
+ * @param {Array} arr of data - array of data passing in
+ */
+ const generateBulkTemplate = (templateFile = null, bulk_arr = []) => {
+    if (templateFile == null) return cliLogger.error(`Error : generateBulkTemplate - missing or undefined paramater 'templateFile'.`);
+   // if (bulk_arr == null) return cliLogger.error(`Error : generateBulkTemplate - Missing or undefined paramater arr.`);
+    let template = fs.readFileSync(path.join(__dirname, `${process.env.GENERATOR_TEMPLATE_PATH}/${templateFile}`), 'utf8');
+    let templateData = {
+        bulk_arr: bulk_arr
+    };
+    // Override default mustache tags with Custom Deliminators to avoid conflicting with vue {{}}
+    //Mustache.tags = customTemplateTags;
+    let renderedTemplate = Mustache.render(template, templateData);
+    return renderedTemplate;
+};
+
+/**
  * @name generateTemplates
  * @description Creates the code necessary using mustache templates
  * @param {string} templateFile - name of template file to use
@@ -233,6 +266,26 @@ const cliLogger = winston.createLogger(logConfiguration);
     };
     // Override default mustache tags with Custom Deliminators to avoid conflicting with vue {{}}
     Mustache.tags = customTemplateTags;
+    let renderedTemplate = Mustache.render(template, templateData);
+    return renderedTemplate;
+};
+
+/**
+ * @name genTemplateBlank
+ * @description Creates the code necessary using mustache templates
+ * @param {string} templateFile - name of template file to use
+ * @param {string} obj - name of screen you are creating a file for
+ * @returns 
+ */
+ const genTemplateBlank = (templateFile = null, obj) => {
+    if (templateFile == null) return cliLogger.error(`Error : generateTemplates - missing or undefined paramater 'templateFile'.`);
+    
+    let template = fs.readFileSync(path.join(__dirname, `${process.env.GENERATOR_TEMPLATE_PATH}/${templateFile}`), 'utf8');
+    let templateData = {
+       ...obj
+    };
+    // Override default mustache tags with Custom Deliminators to avoid conflicting with vue {{}}
+    //Mustache.tags = customTemplateTags;
     let renderedTemplate = Mustache.render(template, templateData);
     return renderedTemplate;
 };
@@ -264,6 +317,9 @@ module.exports = {
     updateVueRouterConfig,
     checkEmptyUtility,
     cliLogger,
-    updateCSV
+    updateCSV,
+    checkEmptyUtilityArr,
+    generateBulkTemplate,
+    genTemplateBlank
 
 }

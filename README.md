@@ -1,44 +1,53 @@
-## Generate Vue Files based off of CSV
+## Generating Files 
 
-### Vue
 
+## About 
+Template files are created in /templates/{parent}/templatefile.mustache 
+
+Feed in the csv file with rows and columns to map and create your files
+
+## Getting Started 
+
+1. Pull the library
+2. Install 
+3. run your generator 
+
+```bash
+npm i 
 ```
-npm run g:vuecsv
+
+```bash
+npm run gen:yourmodule
 ```
 
-### VB Pages
-
-```
-npm run g:vbcsv
+```bash
+npm run clean:yourmodule
 ```
 
-### Set ENV variables 
+## Extending 
+//TODO
 
-```
-# Base directory where vue app files exists
-VUE_BASE_PROJECT_DIRECTORY=../src 
-# Tempate path
-GENERATOR_TEMPLATE_PATH=./_templates
-# Vue CSV File Name
-VUE_CSV_FILE_NAME=WAIS_VUE_V1
-# VB CSV File Name
-VB_CSV_FILE_NAME=WAIS_VB_V1
-# List of vue templates to generate and use
-VUE_TEMPLATE_LIST=BaseData,BaseDTO,BaseView
-# File template configs
-VueDtoFileTemplate=BaseDTO
-VueDataFileTemplate=BaseData
-VueViewFileTemplate=BaseView
-# router config json file
-VUE_ROUTER_CONFIG_FILE_LOCATION=../src/router
-# Router Config File name
-VUE_ROUTER_CONFIG_FILE_NAME=WIASPathConfig
 
-# Base directory where your vb project lives
-VB_BASE_PROJECT_DIRECTORY=../WCAIS.WebAPI
-# Default VB Templates
-VbHelperFileTemplate=BaseHelper
-VbInterfaceFileTemplate=BaseInterface
-VbControllerFileTemplate=BaseController
-VbModelFileTemplate=BaseModel
-```
+## Current Modules and templates 
+
+
+|Module  |Description  | Generate With | Clean With |  Sample CSV |
+|---------|---------|---------|-------| -----|
+|psx     |   used to create react native psx miragejs mock routes      |    npm run gen:psx      |    npm run clean:psx      | PSX_MOCKGEN_V1.csv|
+
+
+|Name  |Description  |  Module | 
+|---------|---------|------|------|
+|BaseAllFixtures     | Creates All Fixtures file for miragejs | psx | 
+|BaseAllModels     |   Creates models file for miragejs      | psx | 
+|BaseAllRequestPlaceholders     | Creates All request file for miragejs        | psx | 
+|BaseDummyPSX     |   Test Dummy      | psx | 
+|BaseMasterRoutes     |Creates All route file         | psx |  
+|BaseMockTestCard     | Creates mock testing screen        | psx | 
+|BaseSingleFixture     | Creates unique fixtures        | psx | 
+|BaseSingleRequestPlaceholders     |   creates unique request placeholders      | psx | 
+
+
+## Known Issues 
+- [] At times you have to run the generator twice in order to create all of your pages this is due to our recursive directory creating.
+

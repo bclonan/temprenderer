@@ -2,9 +2,12 @@
   "name": "temprenderer",
   "version": "1.0.0",
   "main": "index.js",
+  "description": "Reusable Templating Engine",
   "scripts": {
-    "g:vuecsv" : "node generator/vueCsvGenerator.js",
-    "g:vbcsv" : "node generator/vbCsvGenerator.js"
+    "gen:vuecsv": "node generator/vueCsvGenerator.js",
+    "gen:vbcsv": "node generator/vbCsvGenerator.js",
+    "gen:psx": "node generator/psxCsvGenerator.js",
+    "clean:psx": "rimraf app && rimraf mirage"
   },
   "author": "Brad Clonan",
   "license": "ISC",
@@ -18,6 +21,7 @@
     "winston": "^3.7.2"
   },
   "devDependencies": {
-    "nodemon": "^2.0.16"
+    "nodemon": "^2.0.16",
+    "rimraf": "^3.0.2"
   }
 }

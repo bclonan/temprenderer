@@ -1,4 +1,0 @@
-screen,controller,route,directory,chunk,created
-SSR11234,none,/:encId?,health_care/med,healthcare_med,f
-SSR11233,none,/:encId/:userId,bwc/test,bwc_self_insurance,f
-SSR22222,none,/:encId?,health_care/med,healthcare_med,f

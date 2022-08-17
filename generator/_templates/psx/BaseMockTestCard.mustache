@@ -1,0 +1,69 @@
+import React, { useEffect, useState } from 'react';
+import { View, ScrollView, SafeAreaView, TextInput } from 'react-native';
+
+import SBButton from '@components/Button/SBButton';
+import SBTextInput from '@components/TextInput/SBTextInput';
+import SBContent from '@components/Content/SBContent';
+import SBScreenStyles from '@theme/screen-styles';
+import SBInputStyles from '@theme/input-styles';
+import APITestCard from '@components/APITestCard/APITestCard';
+import Service from '@constants/service';
+// TODO : Import request placeholder sample for testing purposes 
+import {requestPlaceholderSample} from '@mirage/request_placeholders/requestPlaceholderSample';
+//Screen styles
+const { apitest } = SBScreenStyles;
+const { screenContentWrapper, headerContainer, inputContainer } = apitest;
+let prettyJson = (input) => JSON.stringify(input, null, 4);
+const TestScreen = ({ navigation }) => {
+  // TODO : Create a [setter, getter] pair for each request placeholder sample
+  // EXAMPLE : const [products, setProducts] = useState([]);
+ {{ #bulk_arr }}
+   const [{{ &name }}, set{{ &name }}] = useState([]);
+ {{ /bulk_arr }}
+  useEffect(() => {
+
+    {{ #bulk_arr }}
+    /**
+     * {{ &name }}
+     * @version 1
+     * @summary {{ &description}}
+     * @memberof {{parent}}
+     * @route - {{ &route }}
+     * @route_mock_sample - {{ &route_mock_sample }}
+     * @interface - {{ name }}
+     * @http - {{ type }}
+     * @example <caption>Example Response.</caption>
+     * {{ &response_sample }}
+     */
+     {{ #isGet }}
+    fetch("{{ &route_mock_sample }}")
+    .then(res => res.json())
+    .then(({ {{ &name }} }) => {
+      set{{ &name }}(prettyJson({{ &name }}));
+    });
+    {{ /isGet }}
+    {{ /bulk_arr }}
+   
+  }, [])
+
+
+
+  return (
+    <>
+    <View style={apitest}>
+      <View style={screenContentWrapper}>
+      <SBContent textType="header">Test Route</SBContent>
+      <ScrollView>
+       {{ #bulk_arr }}
+        {{ #isGet }}
+        <APITestCard content={ {{  name  }} } title="{{  &route  }}" type="{{  &type  }}" description="{{  &description  }}" />
+        {{ /isGet }}
+        {{ /bulk_arr }}
+       </ScrollView>
+      </View>
+    </View>
+    </>
+  );
+}
+
+export default TestScreen;
