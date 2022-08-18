@@ -4,8 +4,6 @@
   "main": "index.js",
   "description": "Reusable Templating Engine",
   "scripts": {
-    "gen:vuecsv": "node generator/vueCsvGenerator.js",
-    "gen:vbcsv": "node generator/vbCsvGenerator.js",
     "gen:psx": "node generator/psxCsvGenerator.js",
     "clean:psx": "rimraf app && rimraf mirage"
   },

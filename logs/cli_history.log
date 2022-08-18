@@ -1,0 +1,18 @@
+info: Label🏷️: Aug-17-2022 18:09:53: Creating: [object Object],[object Object],[object Object],[object Object],[object Object]
+info: Label🏷️: Aug-17-2022 18:09:53: Creating: sbSubmitAClaim
+info: Label🏷️: Aug-17-2022 18:09:53: Creating: sbGetClaimById
+info: Label🏷️: Aug-17-2022 18:09:53: Creating: sbGetClaimsForUser
+info: Label🏷️: Aug-17-2022 18:09:53: Creating: sbGetYTDEarningsForUser
+info: Label🏷️: Aug-17-2022 18:09:53: Creating: sbGetYTDEarningsForAccount
+info: Label🏷️: Aug-17-2022 18:09:53: INFO : createRecursiveDirectory - New Directory Sucessfully Created - ../mirage
+info: Label🏷️: Aug-17-2022 18:09:53: INFO : createRecursiveDirectory - New Directory Sucessfully Created - ../mirage/request_placeholders
+info: Label🏷️: Aug-17-2022 18:09:53: INFO : createRecursiveDirectory - New Directory Sucessfully Created - ../mirage/models
+info: Label🏷️: Aug-17-2022 18:09:53: INFO : createRecursiveDirectory - New Directory Sucessfully Created - ../mirage/fixtures
+info: Label🏷️: Aug-17-2022 18:09:53: INFO : createRecursiveDirectory - New Directory Sucessfully Created - ../mirage/routes
+info: Label🏷️: Aug-17-2022 18:09:53: INFO : createRecursiveDirectory - New Directory Sucessfully Created - ../app/screens
+info: Label🏷️: Aug-17-2022 18:10:06: Creating: [object Object],[object Object],[object Object],[object Object],[object Object]
+info: Label🏷️: Aug-17-2022 18:10:06: Creating: sbSubmitAClaim
+info: Label🏷️: Aug-17-2022 18:10:06: Creating: sbGetClaimById
+info: Label🏷️: Aug-17-2022 18:10:06: Creating: sbGetClaimsForUser
+info: Label🏷️: Aug-17-2022 18:10:06: Creating: sbGetYTDEarningsForUser
+info: Label🏷️: Aug-17-2022 18:10:06: Creating: sbGetYTDEarningsForAccount
