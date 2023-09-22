@@ -1,0 +1,31 @@
+/*
+ * Guide on how to use in PSX Mobile app //todo - add this to the guide
+ */
+// TODO : Import your request placeholder sample here
+// master_requesbulk_arrt_sample_list : [{"name" : "someEndpointSampleFixture}]
+
+{{ #bulk_arr }}
+  {{#hasReqBody}}
+   /**
+    * {{description}}
+    * @name - {{name}}RequestSample
+    * @type {requestPlaceholder}
+    * @memberof {{parent}}
+    * @example <caption>Example Paramaters {{ name }}RequestSample.</caption>
+    {{ #requestArgs }}
+    * @param {//TODO : fill in type} {{.}} - //TODO : Fill in description and ex.
+    {{ /requestArgs}}
+    */
+   import {{ name }}RequestSample from '@mirage/request_placeholders/{{ name }}RequestSample.json';
+  {{/hasReqBody}}
+{{ /bulk_arr }}
+
+
+
+export default { 
+  {{ #bulk_arr }}
+    {{#hasReqBody}}
+      {{ name }}RequestSample,
+    {{/hasReqBody}}
+  {{ /bulk_arr }} 
+};

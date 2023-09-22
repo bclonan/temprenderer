@@ -1,0 +1,54 @@
+
+// TODO : Import your request placeholder sample here
+// master_routes_list : [{"resource_name" : "someEndpointSampleFixture, "isGet" : true}]
+
+/*
+ * Mirage JS guide on Routes: https://miragejs.com/docs/route-handlers/functions
+ */
+
+export default function routes() {
+    this.namespace = 'api';
+
+      {{ #bulk_arr }}
+
+        {{#isGet}}
+     /* 
+     * {{name}}
+     * @version 1
+     * @summary {{ &description}}
+     * @type {mirage.resource} handles all get post update and delete http functions
+     * @http {{type}}
+     * @memberof {{parent}}
+     * @module @mirage/routes
+     * @example <caption>Example Get.</caption>
+     *  fetch("{{ &route_mock_sample }}")
+     *    .then(res => res.json())
+     *    .then(({ {{name}} }) => {
+     *   setProducts(prettyJson( {{name}}));
+     * });
+     */
+     this.resource('{{ &route }}');
+        {{ /isGet }}
+        {{ ^isGet }}
+
+    /* 
+     * {{name}}
+     * @version 1
+     * @summary {{ &description}}
+     * @type {mirage.resource} - handles POST route functions
+     * @http POST
+     * @memberof {{parent}}
+     * @module @mirage/routes
+     */
+    this.post('{{ &route }}', (schema, request) => {
+      let attrs = JSON.parse(request.requestBody)
+      console.log(attrs)
+       // TODO : Finish your request body
+      debugger
+    })
+
+  {{ /isGet }}
+
+{{ /bulk_arr }} 
+  
+  }
