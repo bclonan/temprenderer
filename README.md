@@ -56,6 +56,3 @@ npm run clean:yourmodule
 
 ## Known Issues 
 - [] At times you have to run the generator twice in order to create all of your pages this is due to our recursive directory creating.
-
-
-[Creating Templates Video Sample](https://imgworld.sharepoint.com/:v:/r/sites/16090Digital/Shared%20Documents/Valvoline%20Sticker%20Bucks%203.0/PSX_Mobile/PSX_Mobile/Training%20Sessions/PSX_SPRINT1_API_MOCKING_TEMPLATE_RENDERER_PT_1.mp4?csf=1&web=1&e=FJNGIK)
