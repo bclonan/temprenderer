@@ -1,22 +1,14 @@
 {
   "name": "temprenderer",
   "version": "1.0.0",
-  "description": "https://www.hygen.io/docs/quick-start",
   "main": "index.js",
+  "description": "Reusable Templating Engine",
   "scripts": {
-    "g:vuecsv" : "node generator/vueCsvGenerator.js",
-    "g:vbcsv" : "node generator/vbCsvGenerator.js"
+    "gen:psx": "node generator/psxCsvGenerator.js",
+    "clean:psx": "rimraf app && rimraf mirage"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/bclonan/temprenderer.git"
-  },
-  "author": "",
+  "author": "Brad Clonan",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/bclonan/temprenderer/issues"
-  },
-  "homepage": "https://github.com/bclonan/temprenderer#readme",
   "dependencies": {
     "chalk": "^5.0.1",
     "csv-parser": "^3.0.0",
@@ -27,6 +19,7 @@
     "winston": "^3.7.2"
   },
   "devDependencies": {
-    "nodemon": "^2.0.16"
+    "nodemon": "^2.0.16",
+    "rimraf": "^3.0.2"
   }
 }

@@ -1,0 +1,21 @@
+#,parent,name,route_mock_sample,route,response_sample,request_sample,type,isGet,args,description,hasReqBody,created
+1,SB_Claim_Rest_controller.php,sbSubmitAClaim,sb-claims,/sb-claims,{},"{
+    ""startDate"": ""2021-01-01"",
+    ""endDate"": ""2022-01-01""
+}",POST,n,"startDate, endDate",Submit a claim,y,n
+2,SB_Claim_Rest_controller.php,sbGetClaimById,sb-claims/13,/sb-claims/:id,"{""id"":13,""barcode"":""1173803""}",{},GET,Y,"startDate, endDate", Get a claim by id,n,n
+3,SB_Claim_Rest_controller.php,sbGetClaimsForUser,sb-claims/forUser/38194  ,/sb-claims/forUser/:userId,"{""claimId"":76943,""barcode"":""1263353"",""createDate"":""01\/25\/2022 13:42:08"",""regionName"":null,""distributorName"":null,""accountName"":null,""statusName"":""Funded"",""fundedDate"":null,""userId"":0,""userName"":null,""userEmail"":null,""amount"":""$56.00"",""overdue"":null,""statusId"":0,""earnAsOne"":null,""checksOnlyFlag"":null,""adjustment"":null,""errorMessage"":null,""payoutDate"":null,""entityType"":""StickerClaimSummary""}","{
+    ""startDate"": ""2021-01-01"",
+    ""endDate"": ""2022-01-01""
+}",GET,Y,"startDate, endDate",get claims by user,y,n
+4,SB_Claim_Rest_controller.php,sbGetYTDEarningsForUser,sb-claims/forUser/38194/ytdEarnings,sb-claims/forUser/:accountId/ytdEarnings,"{
+    ""ytdEarnings"": 56,
+    ""entityType"": ""StickerYtdEarnings""
+}","{
+    ""startDate"": ""2021-01-01"",
+    ""endDate"": ""2022-01-01""
+}",GET,y,"startDate, endDate",Get ytd earnings for the account,y,n
+5,SB_Claim_Rest_controller.php,sbGetYTDEarningsForAccount,sb-claims/forAccount/42795/ytdEarnings,sb-claims/forAccount/:accountId/ytdEarnings,,"{
+    ""ytdEarnings"": 270,
+    ""entityType"": ""StickerYtdEarnings""
+}",GET,y,"startDate, endDate",SB Get ytd earnings for account,y,n
