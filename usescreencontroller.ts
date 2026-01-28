@@ -1,16 +1,23 @@
-// packages/shared/src/composables/useScreenController.ts
-import { computed, ref, type Ref, type ComputedRef } from 'vue'
+import {
+    computed,
+    shallowRef,
+    ref,
+    type ShallowRef,
+    type ComputedRef,
+    type Ref,
+} from 'vue'
 import { createScreenApi } from '../services/screenApi'
 import type { ApiEnvelope } from '../services/envelopes'
 
 type MergeFn<T> = (current: T, incoming: Partial<T>) => T
-
 export type ScreenValidationErrors = Record<string, string[]> | null
 
-// ✅ Named return type to prevent TS2742
 export type ScreenController<TDto extends object> = {
     screen: string
-    dto: Ref<TDto>
+
+    // ✅ Use ShallowRef for DTO class instances / objects
+    dto: ShallowRef<TDto>
+
     error: Ref<string | null>
     validationErrors: Ref<ScreenValidationErrors>
     isBusy: ComputedRef<boolean>
@@ -31,17 +38,20 @@ export function useScreenController<TDto extends object>(
     screen: string,
     dtoFactory: () => TDto,
     mergeDto?: MergeFn<TDto>
-): ScreenController<TDto> {   // ✅ explicit return type
+): ScreenController<TDto> {
     const api = createScreenApi(screen)
 
-    const dto = ref<TDto>(dtoFactory())
+    // ✅ shallowRef fixes "not assignable to Ref<TDto>" issues
+    const dto = shallowRef<TDto>(dtoFactory())
+
     const error = ref<string | null>(null)
     const validationErrors = ref<ScreenValidationErrors>(null)
 
     const busyCount = ref(0)
     const isBusy = computed(() => busyCount.value > 0)
 
-    const merge: MergeFn<TDto> = mergeDto ?? ((cur, inc) => Object.assign({}, cur, inc))
+    const merge: MergeFn<TDto> =
+        mergeDto ?? ((cur, inc) => Object.assign({}, cur, inc))
 
     function applyIncoming(incoming: Partial<TDto>) {
         dto.value = merge(dto.value, incoming)
@@ -78,13 +88,19 @@ export function useScreenController<TDto extends object>(
                 return incoming
             }),
 
-        update: (payload?: any) => run(async () => unwrap(await api.post<any>('Update', payload ?? dto.value))),
-        create: (payload?: any) => run(async () => unwrap(await api.post<any>('Create', payload ?? dto.value))),
-        remove: (payload?: any) => run(async () => unwrap(await api.post<any>('Delete', payload ?? {}))),
+        update: (payload?: any) =>
+            run(async () => unwrap(await api.post<any>('Update', payload ?? dto.value))),
+
+        create: (payload?: any) =>
+            run(async () => unwrap(await api.post<any>('Create', payload ?? dto.value))),
+
+        remove: (payload?: any) =>
+            run(async () => unwrap(await api.post<any>('Delete', payload ?? {}))),
     }
 
     function action<TReq = any, TRes = any>(actionName: string) {
-        return (payload?: TReq) => run(async () => unwrap(await api.post<TRes>(actionName, payload ?? {})))
+        return (payload?: TReq) =>
+            run(async () => unwrap(await api.post<TRes>(actionName, payload ?? {})))
     }
 
     return { screen, dto, error, validationErrors, isBusy, applyIncoming, crud, action }
