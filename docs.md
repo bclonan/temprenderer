@@ -1,7 +1,3 @@
-Here’s the full “working system” overview + step-by-step dev docs, written as something you can drop into `docs/SCREEN_SYSTEM.md`.
-
----
-
 # Screen System Dev Docs (Vue + VB.NET)
 
 ## What this system is
@@ -285,7 +281,7 @@ Add:
 
 ---
 
-# Where Files Go (your repo structure)
+# Where Files Go (our repo structure)
 
 ## Vue (participant module)
 
@@ -368,3 +364,282 @@ Backend must implement:
 5. Wrap with `PageLoader`
 
 ---
+
+## How to Access DTO Data in Vue (TypeScript)
+
+In this system, **all screen data lives in a DTO** managed by
+`useScreenController`.
+
+You do **not** create individual refs for each field.
+The DTO *is* the reactive state.
+
+---
+
+## Where the DTO comes from
+
+```ts
+const ctrl = useScreenController(
+  'ParticipantDetail',
+  () => new ParticipantDetailDTO()
+)
+```
+
+This gives you:
+
+```ts
+ctrl.dto  // Ref<ParticipantDetailDTO>
+```
+
+Important:
+
+* `ctrl.dto` is a Vue **ref**
+* The actual object is `ctrl.dto.value`
+* Vue templates automatically unwrap `.value`
+
+---
+
+## Rules (memorize these)
+
+| Location         | How to access              |
+| ---------------- | -------------------------- |
+| `<script setup>` | `ctrl.dto.value.field`     |
+| `<template>`     | `ctrl.dto.field`           |
+| Server merge     | `ctrl.applyIncoming(data)` |
+| Save             | `ctrl.crud.update()`       |
+
+---
+
+## Small, complete Vue example
+
+### DTO
+
+```ts
+// ParticipantDetailDTO.ts
+export default class ParticipantDetailDTO {
+  screenTitle = 'Participant Detail'
+  encId: string | null = null
+
+  participant = {
+    firstName: '',
+    lastName: '',
+  }
+
+  canEdit = false
+}
+```
+
+---
+
+### Page Component
+
+```vue
+<script setup lang="ts">
+import { onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import ParticipantDetailDTO from '@/dto/ParticipantDetail/ParticipantDetailDTO'
+import { useScreenController } from '@shared/composables/useScreenController'
+
+const route = useRoute()
+
+const ctrl = useScreenController(
+  'ParticipantDetail',
+  () => new ParticipantDetailDTO()
+)
+
+// Example: computed value derived from DTO
+const fullName = computed(() => {
+  const p = ctrl.dto.value.participant
+  return `${p.firstName} ${p.lastName}`
+})
+
+onMounted(async () => {
+  const encId = String(route.params.encId)
+
+  // Always set encId into DTO
+  ctrl.applyIncoming({ encId })
+
+  // Load page scaffolding
+  await ctrl.crud.pageLoad({ encId })
+
+  // Load record data
+  const detail = await ctrl.action('GetDetail')({ encId })
+  ctrl.applyIncoming(detail)
+})
+
+function save() {
+  // Sends ctrl.dto.value to POST /Update
+  ctrl.crud.update()
+}
+</script>
+
+<template>
+  <div>
+    <h2>{{ ctrl.dto.screenTitle }}</h2>
+
+    <div>
+      <label>First Name</label>
+      <input
+        v-model="ctrl.dto.participant.firstName"
+        :disabled="!ctrl.dto.canEdit"
+      />
+    </div>
+
+    <div>
+      <label>Last Name</label>
+      <input
+        v-model="ctrl.dto.participant.lastName"
+        :disabled="!ctrl.dto.canEdit"
+      />
+    </div>
+
+    <div>
+      Full Name: {{ fullName }}
+    </div>
+
+    <button
+      :disabled="!ctrl.dto.canEdit || ctrl.isBusy"
+      @click="save"
+    >
+      Save
+    </button>
+
+    <div v-if="ctrl.error">
+      {{ ctrl.error }}
+    </div>
+  </div>
+</template>
+```
+
+---
+
+## Access patterns you will use most
+
+### Read a value (script)
+
+```ts
+const canEdit = ctrl.dto.value.canEdit
+```
+
+### Read a value (template)
+
+```vue
+{{ ctrl.dto.canEdit }}
+```
+
+---
+
+### Update a single field (UI-driven)
+
+```ts
+ctrl.dto.value.participant.firstName = 'Brad'
+```
+
+---
+
+### Merge server data (recommended)
+
+```ts
+ctrl.applyIncoming({
+  participant: serverParticipant,
+  canEdit: true,
+})
+```
+
+This prevents accidentally replacing the DTO instance.
+
+---
+
+## Validation errors tied to DTO fields
+
+Backend returns:
+
+```json
+{
+  "ok": false,
+  "validationErrors": {
+    "participant.firstName": ["Required"]
+  }
+}
+```
+
+Frontend access:
+
+```vue
+<div v-if="ctrl.validationErrors?.['participant.firstName']">
+  {{ ctrl.validationErrors['participant.firstName'][0] }}
+</div>
+```
+
+---
+
+## Common mistakes (avoid these)
+
+### Forgetting `.value` in script
+
+```ts
+ctrl.dto.encId  // wrong
+```
+
+Correct:
+
+```ts
+ctrl.dto.value.encId
+```
+
+---
+
+### Using `.value` in template
+
+```vue
+{{ ctrl.dto.value.encId }}  <!-- wrong -->
+```
+
+Correct:
+
+```vue
+{{ ctrl.dto.encId }}
+```
+
+---
+
+### Replacing the DTO object
+
+```ts
+ctrl.dto.value = new ParticipantDetailDTO() // wrong
+```
+
+Correct:
+
+```ts
+ctrl.applyIncoming(newData)
+```
+
+---
+
+## Mental model
+
+* The DTO is the **single source of truth**
+* The server defines its shape
+* Vue reacts automatically
+* You edit fields directly
+* Saves and loads are standardized
+
+## Bonus: Cleaner `<script setup>` with destructuring
+You can destructure props to avoid using `props.` in the template.
+Compare this snippet from `RM2.md`:
+
+```vue
+<script setup lang="ts">
+type ValidationErrors = Record<string, string[]> | null
+const { busy, error, validationErrors, loadingText } = defineProps<{
+  busy: boolean
+  error: string | null
+  validationErrors?: ValidationErrors
+  loadingText?: string
+}>()
+</script>
+<template>
+  <div v-if="error">{{ error }}</div>
+  <div v-if="busy">{{ loadingText ?? 'Loading...' }}</div>
+</template>
+```
