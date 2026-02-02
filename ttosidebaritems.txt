@@ -1,0 +1,191 @@
+function toSidebarItems(nodes: any[] | undefined, inheritedIcon?: string): SidebarMenuItem[] {
+    const safe = Array.isArray(nodes) ? nodes : []
+
+    return safe.map((n) => {
+        const title = (n?.["@title"] ?? "").toString().trim()
+        const level = (n?.["@menuLevel"] ?? "").toString().trim()
+
+        const id = level || title || crypto.randomUUID()
+
+        const rawUrl = (n?.["@url"] ?? "").toString().trim()
+        const url = rawUrl.length ? rawUrl : undefined
+
+        // ✅ icon by menuLevel, optional parent icon inheritance
+        const icon = (level && FA_ICON_BY_MENU_LEVEL[level]) || inheritedIcon
+
+        const children = toSidebarItems(n?.siteMapNode, icon)
+
+        return {
+            id,
+            title: title || "(untitled)",
+            url,
+            icon,
+            children,
+        }
+    })
+}
+
+
+// end function 
+
+// new getter 
+sidebarMenuItems: (s): SidebarMenuItem[] => {
+    const top = s.model?.menu?.siteMapNode?.siteMapNode
+    return toSidebarItems(top)
+},
+
+
+
+// new script in AppSiddebar
+<script setup lang="ts">
+import { reactive, computed } from "vue"
+import { storeToRefs } from "pinia"
+import { useRouter } from "vue-router"
+import { useUserInformationStore } from "@/stores/user-information-store"
+
+const router = useRouter()
+const store = useUserInformationStore()
+
+// If storeToRefs doesn't expose getters as refs in your setup, use computed fallback.
+const sidebarMenuItems = computed(() => store.sidebarMenuItems)
+
+const openMap = reactive<Record<string, boolean>>({})
+
+function toggle(id: string) {
+  openMap[id] = !openMap[id]
+}
+
+function navigate(item: any) {
+  if (item.children?.length) {
+    toggle(item.id)
+    return
+  }
+  if (!item.url) return
+
+  const isAbsolute = /^https?:\/\//i.test(item.url)
+  if (isAbsolute) {
+    window.location.href = item.url
+    return
+  }
+
+  router.push(item.url)
+}
+</script>
+
+
+// new template section in AppSidebar
+<template>
+  <b-sidebar shadow title="Menu" backdrop>
+    <b-nav vertical>
+      <template v-for="item in sidebarMenuItems" :key="item.id">
+        <!-- TOP -->
+        <div
+          class="d-flex align-items-center justify-content-between px-3 py-2 sidebar-item"
+          role="button"
+          tabindex="0"
+          @click="navigate(item)"
+          @keydown.enter="navigate(item)"
+        >
+          <div class="d-flex align-items-center gap-2">
+            <!-- Font Awesome icon -->
+            <i v-if="item.icon" class="fa" :class="item.icon" />
+            <span class="text-truncate">{{ item.title }}</span>
+          </div>
+
+          <!-- Toggle chevron (Font Awesome) -->
+          <i
+            v-if="item.children?.length"
+            class="fa fa-chevron-down chevron"
+            :class="{ open: !!openMap[item.id] }"
+            @click.stop="toggle(item.id)"
+          />
+        </div>
+
+        <!-- CHILDREN -->
+        <b-collapse v-if="item.children?.length" :model-value="!!openMap[item.id]">
+          <div class="ms-4">
+            <template v-for="child in item.children" :key="child.id">
+              <div
+                class="d-flex align-items-center justify-content-between px-3 py-2 sidebar-item child"
+                role="button"
+                tabindex="0"
+                @click="navigate(child)"
+                @keydown.enter="navigate(child)"
+              >
+                <div class="d-flex align-items-center gap-2">
+                  <i v-if="child.icon" class="fa" :class="child.icon" />
+                  <span class="text-truncate">{{ child.title }}</span>
+                </div>
+
+                <i
+                  v-if="child.children?.length"
+                  class="fa fa-chevron-down chevron"
+                  :class="{ open: !!openMap[child.id] }"
+                  @click.stop="toggle(child.id)"
+                />
+              </div>
+
+              <!-- GRANDCHILDREN -->
+              <b-collapse v-if="child.children?.length" :model-value="!!openMap[child.id]">
+                <div class="ms-4">
+                  <div
+                    v-for="g in child.children"
+                    :key="g.id"
+                    class="d-flex align-items-center px-3 py-2 sidebar-item grandchild"
+                    role="button"
+                    tabindex="0"
+                    @click="navigate(g)"
+                    @keydown.enter="navigate(g)"
+                  >
+                    <i v-if="g.icon" class="fa me-2" :class="g.icon" />
+                    <span class="text-truncate">{{ g.title }}</span>
+                  </div>
+                </div>
+              </b-collapse>
+            </template>
+          </div>
+        </b-collapse>
+      </template>
+    </b-nav>
+  </b-sidebar>
+</template>
+
+
+// new styles 
+
+<style scoped>
+.sidebar-item {
+  border-radius: 0.35rem;
+}
+.sidebar-item:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+.child {
+  font-size: 0.95rem;
+}
+.grandchild {
+  font-size: 0.92rem;
+  opacity: 0.95;
+}
+.chevron {
+  transition: transform 0.15s ease;
+}
+.chevron.open {
+  transform: rotate(180deg);
+}
+</style>
+
+
+
+// possible for fa5
+const FA_ICON_BY_MENU_LEVEL = {
+  "1": "fa-solid fa-house",
+  "2": "fa-solid fa-magnifying-glass",
+  "6": "fa-regular fa-circle-question",
+}
+
+
+
+// log 
+console.log(sidebarMenuItems.value.map(x => ({ id: x.id, title: x.title })))
+
