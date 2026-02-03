@@ -60,30 +60,39 @@ onBeforeUnmount(() => {
 </template>
 
 <style lang="scss" scoped>
-.app-layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+/* IMPORTANT: Offcanvas is rendered with Bootstrap classes */
+:deep(.offcanvas.app-sidebar) {
+  top: var(--app-header-height) !important;
+  height: calc(100vh - var(--app-header-height)) !important;
 
-  &__header {
-    /* keep it normal flow; sidebar will position under this */
-  }
+  /* desktop width like your screenshot */
+  --bs-offcanvas-width: 320px;
 
-  &__container {
-    display: flex;
-    flex: 1;
-  }
+  /* remove default shadow */
+  box-shadow: none !important;
 
-  &__main {
-    flex: 1;
-    padding: 1.5rem;
-    background-color: #f9fafb;
-  }
+  /* panel lines like legacy UI */
+  border-top: 1px solid #d9d9d9;
+  border-left: 1px solid #d9d9d9; /* right-side menu (placement=end) */
+  border-right: 0;
+  border-radius: 0;
 }
 
+:deep(.offcanvas.app-sidebar .offcanvas-header) {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #d9d9d9;
+}
+
+:deep(.offcanvas.app-sidebar .offcanvas-body) {
+  padding: 0;
+}
+
+/* ✅ mobile = full width */
 @media (max-width: 768px) {
-  .app-layout__main {
-    padding: 1rem;
+  :deep(.offcanvas.app-sidebar) {
+    --bs-offcanvas-width: 100vw;
+    left: 0 !important;
+    right: 0 !important;
   }
 }
 </style>
