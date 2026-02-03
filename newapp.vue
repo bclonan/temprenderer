@@ -96,3 +96,16 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+
+
+<style>
+:deep(.offcanvas.app-sidebar),
+:deep(.offcanvas-end.app-sidebar),
+:deep(.offcanvas-start.app-sidebar) {
+  top: var(--app-header-height) !important;
+  height: calc(100vh - var(--app-header-height)) !important;
+  box-shadow: none !important;
+}
+
+
+</style>
