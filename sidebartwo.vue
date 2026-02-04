@@ -1,103 +1,91 @@
 <script setup lang="ts">
-import { computed, reactive } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { computed, reactive } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { BOffcanvas, BCollapse } from 'bootstrap-vue-next'
+import { useAppStore } from '@/stores/app-store' // adjust if yours differs
+import { useUserInformationStore } from '@/stores/user-information-store' // adjust
+import type { SidebarMenuItem } from '@/dto/userInformationDto' // adjust path
 
-import { useAppStore } from "@cwds/shared/stores";
-import { useUserInformationStore } from "../../stores/user-information-store";
-
-// BootstrapVueNext
-import { BOffcanvas, BCollapse } from "bootstrap-vue-next";
+const router = useRouter()
+const route = useRoute()
+const appStore = useAppStore()
+const userInfoStore = useUserInformationStore()
 
 /**
- * IMPORTANT:
- * Your SidebarMenuItem type should have:
- *   - url?: string
- *   - children?: SidebarMenuItem[]
- * (NOT path)
+ * Offcanvas open/close (your store already drives this)
  */
-type SidebarMenuItem = {
-  id: string;
-  title: string;
-  url?: string;
-  icon?: string;
-  children?: SidebarMenuItem[];
-};
-
-const appStore = useAppStore();
-const userStore = useUserInformationStore();
-
-const router = useRouter();
-const route = useRoute();
-
-/** show/hide offcanvas via your app store */
 const show = computed({
-  get: () => !appStore.sidebarCollapsed, // adjust if your store uses opposite meaning
-  set: (v: boolean) => appStore.toggleSidebar(v),
-});
-
-/** menu items from store (already normalized recursively) */
-const sidebarMenuItems = computed<SidebarMenuItem[]>(
-  () => userStore.sidebarMenuItems as any,
-);
+  get: () => appStore.sidebarOpen,
+  set: (v: boolean) => appStore.setSidebarOpen(v),
+})
 
 /**
- * openMap controls all collapses by id (works for BOTH 2nd and 3rd level)
- * Record<string, boolean> avoids TS "boolean not comparable to string" issues.
+ * openMap controls which collapses are open.
+ * We store expansion state for BOTH level-1 and level-2 items.
  */
-const openMap = reactive<Record<string, boolean>>({});
+const openMap = reactive<Record<string, boolean>>({})
 
-function getOpen(id: string) {
-  return openMap[id] ?? false;
-}
-function setOpen(id: string, v: boolean) {
-  openMap[id] = v;
-}
 function toggle(id: string) {
-  openMap[id] = !getOpen(id);
+  openMap[id] = !openMap[id]
 }
 
-/** Treat absolute URLs as http/https */
+/**
+ * Absolute URL check (http/https)
+ * - Using URL() is the most robust way
+ * - It will throw for relative paths like "/Employer/ReportNewHires"
+ */
 function isAbsoluteUrl(url: string): boolean {
   try {
-    const u = new URL(url);
-    return u.protocol === "http:" || u.protocol === "https:";
+    const u = new URL(url)
+    return u.protocol === 'http:' || u.protocol === 'https:'
   } catch {
-    return false;
+    return false
   }
 }
 
-/** Active route highlight for relative URLs only */
+/**
+ * Mark active only for internal (router) routes.
+ * External absolute URLs should NOT be treated as active.
+ */
 function isActive(url?: string): boolean {
-  if (!url) return false;
-  if (isAbsoluteUrl(url)) return false;
-
-  // normalize (strip query/hash)
-  const clean = url.split("?")[0].split("#")[0];
-  return route.path.startsWith(clean);
+  if (!url) return false
+  if (isAbsoluteUrl(url)) return false
+  const clean = url.split('?')[0].split('#')[0]
+  return route.path.startsWith(clean)
 }
 
-/** Navigate: if it has children => toggle; else route or full redirect */
+/**
+ * Navigate behavior:
+ * - If the item has children, we EXPAND/COLLAPSE (do not navigate)
+ * - Otherwise navigate:
+ *   - absolute http/https => window.location
+ *   - relative => router.push
+ */
 function navigate(item: SidebarMenuItem) {
   if (item.children?.length) {
-    toggle(item.id);
-    return;
+    toggle(item.id)
+    return
   }
 
-  const url = item.url?.trim();
-  if (!url) return;
+  if (!item.url) return
 
-  if (isAbsoluteUrl(url)) {
-    window.location.href = url;
-    return;
+  if (isAbsoluteUrl(item.url)) {
+    window.location.href = item.url
+    return
   }
 
-  router.push(url);
+  router.push(item.url)
 
-  // optional: auto-close on mobile after navigation
+  // Auto-close on mobile (optional)
   if (window.innerWidth < 768) {
-    show.value = false;
+    appStore.setSidebarOpen(false)
   }
 }
+
+/**
+ * Menu items from the store
+ */
+const sidebarMenuItems = computed(() => userInfoStore.sidebarMenuItems)
 </script>
 
 <template>
@@ -105,15 +93,14 @@ function navigate(item: SidebarMenuItem) {
     v-model="show"
     placement="end"
     class="offcanvas app-sidebar"
-    title=""
-    :body-scrolling="true"
-    :backdrop="true"
     no-header
-    @hidden="appStore.toggleSidebar(false)"
+    :backdrop="true"
+    :body-scrolling="true"
   >
     <nav class="sidebar-nav">
+      <!-- LEVEL 1 -->
       <template v-for="item in sidebarMenuItems" :key="item.id">
-        <!-- Level 1 row -->
+        <!-- Parent row -->
         <div
           class="sidebar-row"
           :class="{ active: isActive(item.url) }"
@@ -123,32 +110,23 @@ function navigate(item: SidebarMenuItem) {
           @keydown.enter="navigate(item)"
         >
           <div class="sidebar-row__left">
-            <i
-              v-if="item.icon"
-              class="fa"
-              :class="item.icon"
-              aria-hidden="true"
-            />
+            <i v-if="item.icon" class="fa" :class="item.icon" aria-hidden="true" />
             <span class="text-truncate">{{ item.title }}</span>
           </div>
 
+          <!-- Chevron for expandable parents -->
           <i
             v-if="item.children?.length"
             class="fa sidebar-row__chev"
-            :class="getOpen(item.id) ? 'fa-chevron-down' : 'fa-chevron-right'"
+            :class="openMap[item.id] ? 'fa-chevron-down' : 'fa-chevron-right'"
             aria-hidden="true"
           />
         </div>
 
-        <!-- Level 2: children collapse -->
-        <BCollapse
-          v-if="item.children?.length"
-          class="sidebar-children"
-          :model-value="getOpen(item.id)"
-          @update:modelValue="(v: boolean) => setOpen(item.id, v)"
-        >
+        <!-- LEVEL 2 container -->
+        <BCollapse v-if="item.children?.length" v-model="openMap[item.id]" class="sidebar-children">
+          <!-- LEVEL 2 rows -->
           <template v-for="child in item.children" :key="child.id">
-            <!-- Level 2 row -->
             <div
               class="sidebar-child"
               :class="{ active: isActive(child.url) }"
@@ -158,32 +136,26 @@ function navigate(item: SidebarMenuItem) {
               @keydown.enter="navigate(child)"
             >
               <div class="sidebar-row__left">
-                <i
-                  v-if="child.icon"
-                  class="fa"
-                  :class="child.icon"
-                  aria-hidden="true"
-                />
+                <i v-if="child.icon" class="fa" :class="child.icon" aria-hidden="true" />
                 <span class="text-truncate">{{ child.title }}</span>
               </div>
 
+              <!-- Chevron for expandable children (this is the missing piece) -->
               <i
                 v-if="child.children?.length"
                 class="fa sidebar-row__chev"
-                :class="
-                  getOpen(child.id) ? 'fa-chevron-down' : 'fa-chevron-right'
-                "
+                :class="openMap[child.id] ? 'fa-chevron-down' : 'fa-chevron-right'"
                 aria-hidden="true"
               />
             </div>
 
-            <!-- Level 3: grandchildren collapse -->
+            <!-- LEVEL 3 container -->
             <BCollapse
               v-if="child.children?.length"
+              v-model="openMap[child.id]"
               class="sidebar-grandchildren"
-              :model-value="getOpen(child.id)"
-              @update:modelValue="(v: boolean) => setOpen(child.id, v)"
             >
+              <!-- LEVEL 3 rows -->
               <div
                 v-for="grand in child.children"
                 :key="grand.id"
@@ -195,12 +167,7 @@ function navigate(item: SidebarMenuItem) {
                 @keydown.enter="navigate(grand)"
               >
                 <div class="sidebar-row__left">
-                  <i
-                    v-if="grand.icon"
-                    class="fa"
-                    :class="grand.icon"
-                    aria-hidden="true"
-                  />
+                  <i v-if="grand.icon" class="fa" :class="grand.icon" aria-hidden="true" />
                   <span class="text-truncate">{{ grand.title }}</span>
                 </div>
               </div>
@@ -212,61 +179,14 @@ function navigate(item: SidebarMenuItem) {
   </BOffcanvas>
 </template>
 
-<style lang="scss" scoped>
-/* ================================
-   Offcanvas overrides (IMPORTANT)
-   ================================ */
-
-/**
- * Keep the backdrop element so "click outside" closes the offcanvas,
- * but make it visually invisible.
- * (Opacity 0 still captures clicks => perfect for your ask.)
- */
-:global(.offcanvas-backdrop) {
-  opacity: 0 !important;
-}
-
-/**
- * Move offcanvas down under the fixed header.
- * This requires --app-header-height to exist globally.
- */
-:deep(.offcanvas) {
-  top: var(--app-header-height) !important;
-  height: calc(100vh - var(--app-header-height)) !important;
-}
-
-/** Target your offcanvas instance (class is on the root offcanvas) */
-:global(.offcanvas.app-sidebar) {
-  /* remove Bootstrap padding so your menu lines up */
-  --bs-offcanvas-padding-x: 0;
-  --bs-offcanvas-padding-y: 0;
-
-  /* set width */
-  --bs-offcanvas-width: 320px;
-
-  /* visuals */
-  box-shadow: none !important;
-  border-top: 1px solid #d9d9d9;
-  border-left: 1px solid #d9d9d9;
-  border-right: 0;
-  border-radius: 0;
-}
-
-:deep(.offcanvas.app-sidebar .offcanvas-body) {
-  padding: 0 !important;
-  overflow-y: auto;
-}
-
-/* ================================
-   Sidebar menu styling
-   ================================ */
-
+<style scoped lang="scss">
+/* Sidebar Menu */
 .sidebar-nav {
   display: flex;
   flex-direction: column;
 }
 
-/* Shared row styling */
+/* shared row layout */
 .sidebar-row,
 .sidebar-child,
 .sidebar-grandchild {
@@ -286,17 +206,16 @@ function navigate(item: SidebarMenuItem) {
 }
 
 .sidebar-row__chev {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
-/* Hover */
+/* hover + active */
 .sidebar-row:hover,
 .sidebar-child:hover,
 .sidebar-grandchild:hover {
   background: #f5f5f5;
 }
 
-/* Active */
 .sidebar-row.active,
 .sidebar-child.active,
 .sidebar-grandchild.active {
@@ -304,29 +223,48 @@ function navigate(item: SidebarMenuItem) {
   font-weight: 600;
 }
 
-/* Level 2 container (slightly gray background) */
+/* LEVEL 2 background + indent */
 .sidebar-children {
-  background: #f7f7f7; /* <-- this is the “slightly gray” child background */
-  border-top: 1px solid #e2e2e2;
+  /* ✅ line you asked for: child menu slightly gray */
+  background: #f5f5f5;
 }
 
-/* Level 2 items indent */
 .sidebar-child {
   padding-left: 2rem;
-  border-top: 1px solid #eaeaea;
+  border-top: 1px solid #e2e2e2;
+  background: #f5f5f5;
 }
 
-/* Level 3 container + deeper indent */
+/* LEVEL 3 background + indent (slightly different so it reads as deeper) */
 .sidebar-grandchildren {
-  background: #f3f3f3;
+  background: #efefef;
 }
 
 .sidebar-grandchild {
   padding-left: 3.25rem;
-  border-top: 1px solid #eaeaea;
+  border-top: 1px solid #e2e2e2;
+  background: #efefef;
 }
 
-/* Mobile: full width offcanvas */
+/* Offcanvas overrides (keep yours / merge as needed) */
+:global(.offcanvas.app-sidebar) {
+  --bs-offcanvas-padding-x: 0;
+  --bs-offcanvas-padding-y: 0;
+  --bs-offcanvas-width: 320px;
+
+  box-shadow: none !important;
+  border-top: 1px solid #d9d9d9;
+  border-left: 1px solid #d9d9d9;
+  border-right: 0;
+  border-radius: 0;
+}
+
+:deep(.offcanvas.app-sidebar .offcanvas-body) {
+  padding: 0 !important;
+  overflow-y: auto;
+}
+
+/* Mobile: full width */
 @media (max-width: 768px) {
   :global(.offcanvas.app-sidebar) {
     --bs-offcanvas-width: 100vw;
